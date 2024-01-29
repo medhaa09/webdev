@@ -56,7 +56,7 @@ func (m MyMap) Encrypt() []int {
 func main() {
 
 	var Input interface{}
-	fmt.Println("Enter input")
+	fmt.Println("Enter input (enter array elements with comma and map key value pairs with comma as well and colon between each key and value")
 	scanner := bufio.NewScanner(os.Stdin)
 	if scanner.Scan() {
 		Input = scanner.Text()
