@@ -1,84 +1,59 @@
 package main
 
 import (
-	"bufio"
-	"encoding/json"
+	"codeforces/data"
+	"codeforces/models"
+	"codeforces/store"
+	"codeforces/worker"
 	"fmt"
-	"os"
+	"net/http"
+
+	"github.com/gin-contrib/cors" // Use gin-contrib/cors, not rs/cors
+	"github.com/gin-gonic/gin"
 )
 
-type Cipher interface {
-	encrypt() []int
-}
-
-type MyString string
-type IntArray []int
-type MyMap map[string]int
-
-func (s MyString) Encrypt() []int {
-	result := make([]int, len(s))
-	for i, char := range s {
-		result[i] = int(char) - 64
-	}
-
-	return result
-}
-func (a IntArray) Encrypt() []int {
-	result := make([]int, len(a))
-	for i := 0; i < len(a); i++ {
-		for a[i] != 1 {
-			if a[i]%2 == 0 {
-				a[i] = a[i] / 2
-			} else {
-				a[i] = 3*a[i] + 1
-			}
-
-		}
-		result[i] = a[i]
-	}
-	return result
-}
-func (m MyMap) Encrypt() []int {
-	result := make([]int, len(m))
-	var values []int
-	var keys []rune
-	for k, v := range m {
-		values = append(values, v)
-		keys = append(keys, []rune(k)...)
-	}
-	for i, k := range keys {
-		result[i] = int(k) + values[(i+2)%len(keys)]
-
-	}
-	return result
-
-}
 func main() {
+	mongoStore := &store.MongoStore{}
+	mongoStore.OpenConnectionWithMongoDB()
 
-	var Input interface{}
-	fmt.Println("Enter input (enter array elements with comma and map key value pairs with comma as well and colon between each key and value")
-	scanner := bufio.NewScanner(os.Stdin)
-	if scanner.Scan() {
-		Input = scanner.Text()
-		var intArr IntArray
-		flag := 0
-		inputBytes := []byte(Input.(string))
-		if err := json.Unmarshal(inputBytes, &intArr); err == nil {
-			result := intArr.Encrypt()
-			fmt.Println(result)
-			flag = 1
+	// Launches PerformWork as a goroutine
+	go worker.PerformWork(mongoStore)
+
+	// Server (using gin framework)
+	router := gin.Default()
+
+	// Setup CORS middleware
+	router.Use(cors.Default()) // This applies the default CORS policies
+	router.POST("/user/signup", func(c *gin.Context) {
+		var newUser models.User
+		if err := c.ShouldBindJSON(&newUser); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
 		}
-		var mapp MyMap
-		inputBytes2 := []byte(Input.(string))
-		if err2 := json.Unmarshal(inputBytes2, &mapp); err2 == nil {
-			result := mapp.Encrypt()
-			fmt.Println(result)
-			flag = 1
-		}
-		if flag == 0 {
-			result := Input.(MyString).Encrypt()
-			fmt.Println(result)
+		if err := mongoStore.StoreUserData(newUser); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to store user data"})
+			return
 		}
 
+		c.JSON(http.StatusOK, gin.H{"message": "Signup successful"})
+	})
+	// Route to show all the recent actions data
+	router.GET("/activity/recent-actions", func(c *gin.Context) {
+		cfClient := data.CodeforcesClient{Client: http.DefaultClient, Mongo: mongoStore}
+		recentActionsData, err := cfClient.RecentActions(50)
+		if err != nil {
+			fmt.Printf("Error fetching recent actions: %v\n", err) // Log server-side for debugging
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve recent actions data"})
+
+		}
+		c.JSON(http.StatusOK, gin.H{"recentActions": recentActionsData})
+
+	})
+
+	// Listen and serve on the specified port
+	port := ":8080"
+	fmt.Printf("Server running on port %s\n", port)
+	if err := router.Run(port); err != nil {
+		fmt.Printf("Failed to start server: %s\n", err)
 	}
 }
