@@ -2,10 +2,7 @@ import * as React from 'react';
 import PropTypes from 'prop-types';
 import Toolbar from '@mui/material/Toolbar';
 import Button from '@mui/material/Button';
-import IconButton from '@mui/material/IconButton';
-import SearchIcon from '@mui/icons-material/Search';
 import Typography from '@mui/material/Typography';
-import Link from '@mui/material/Link';
 import { useNavigate } from 'react-router-dom';
 
 function Header(props) {
@@ -17,25 +14,24 @@ function Header(props) {
     localStorage.removeItem("token")
     localStorage.removeItem("refreshToken")
   }
+  function homeHandler(){
+    navigate("/")
+   
+  }
 
   return (
-    <React.Fragment>
-      <Toolbar sx={{ borderBottom: 1, borderColor: 'divider' }}>
-        <Button size="small" style={{ color:'black', borderColor:'black'}}>Subscribe</Button>
-        <Typography
-          component="h2"
-          variant="h5"
-          color="inherit"
-          align="center"
-          noWrap
-          sx={{ flex: 1 }}
-        >
-          {title}
-        </Typography>
-        <IconButton>
-          <SearchIcon />
-        </IconButton>
-        <Button onClick={() => logoutHandler()}  variant="outlined" size="small" style={{color:'black', borderColor:'black'}}  >
+    <div >
+      <Toolbar sx={{ borderBottom: 2, borderColor: 'white' }}>
+        <Button size="large" style={{ color:'white'  }}sx={{
+        '&:hover': {
+            backgroundColor: 'rgba(255, 255, 255, 0.3)' 
+        }
+    }} onClick={() => homeHandler()}  >Home</Button>
+        <Button onClick={() => logoutHandler()}   size="large" style={{color:'white'}} sx={{
+        '&:hover': {
+            backgroundColor: 'rgba(255, 255, 255, 0.3)' 
+        }
+    }} >
           Log Out
         </Button>
       </Toolbar>
@@ -44,31 +40,10 @@ function Header(props) {
         variant="dense"
         sx={{ justifyContent: 'space-between', overflowX: 'auto' }}
       >
-        {sections.map((section) => (
-          <Link
-            color="inherit"
-            noWrap
-            key={section.title}
-            variant="body2"
-            href={section.url}
-            sx={{ p: 1, flexShrink: 0 }}
-          >
-            {section.title}
-          </Link>
-        ))}
       </Toolbar>
-    </React.Fragment>
+    </div>
   );
 }
 
-Header.propTypes = {
-  sections: PropTypes.arrayOf(
-    PropTypes.shape({
-      title: PropTypes.string.isRequired,
-      url: PropTypes.string.isRequired,
-    }),
-  ).isRequired,
-  title: PropTypes.string.isRequired,
-};
 
 export default Header;

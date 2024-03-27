@@ -75,7 +75,7 @@ func main() {
 			return
 		}
 		uniqueBlogIDs := store.FetchUniqueBlogIDs(recentActionsData)
-		groupedCommentsMap := make(map[int]models.GroupedComments) // Corrected: Map to single GroupedComments per blog ID
+		groupedCommentsMap := make(map[int]models.GroupedComments)
 
 		for _, blogID := range uniqueBlogIDs {
 			actions, err := mongoStore.QueryRecentActions(blogID)
@@ -88,14 +88,16 @@ func main() {
 			if _, exists := groupedCommentsMap[blogID]; !exists {
 				groupedCommentsMap[blogID] = models.GroupedComments{
 					BlogID:    blogID,
-					BlogTitle: "", // Initialize empty; will be set in the loop below
+					BlogTitle: "",
+					Handle:    "",
 					Comments:  []string{}}
 			}
 			for _, action := range actions {
-				Grouped := groupedCommentsMap[blogID]                                // Copy existing structure out of the map
-				Grouped.BlogTitle = action.Blog.Title                                // Set title (redundant if done multiple times but ensures it's set)
+				Grouped := groupedCommentsMap[blogID] // Copy existing structure out of the map
+				Grouped.BlogTitle = action.Blog.Title // Set title (redundant if done multiple times but ensures it's set)
+				Grouped.Handle = action.Blog.AuthorHandle
 				Grouped.Comments = append(Grouped.Comments, action.Comments.Comment) // Append comments
-				groupedCommentsMap[blogID] = Grouped                                 // Put the modified structure back into the map
+				groupedCommentsMap[blogID] = Grouped                                 // Puts the modified structure back into the map
 			}
 		}
 		// Convert map to slice for JSON serialization because in maps the order of iteration is not fixed so we convert it into a slice adn then send it as JSON

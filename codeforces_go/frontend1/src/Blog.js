@@ -14,9 +14,6 @@ const mainFeaturedPost = {
   title: 'Codeforces Recent Actions',
   description:
     "Here are the various blog posts with their corresponding comments.",
-  image: 'https://source.unsplash.com/random?wallpapers',
-  imageText: 'main image description'
-  
 };
 
 const defaultTheme = createTheme();
@@ -30,7 +27,6 @@ export default function Blog() {
       }
     });
   }
-  
   fetchProtectedData();
   useEffect(() => {
     const token = localStorage.getItem('token'); // Retrieve the token from localStorage
@@ -42,9 +38,8 @@ export default function Blog() {
     .then((res) => {
         const posts = res.data.groupedComments.map(item => ({
             title: item.title,
+            author: item.authorHandle,
             description: `comments for blog post ${item.id}`,
-            image: 'https://source.unsplash.com/random?wallpapers',
-            imageLabel: 'Image Text',
             path: `/blogs/:${item.id}`
         }));
         setFeaturedPosts(posts); // Update your state with the fetched posts
@@ -57,7 +52,7 @@ export default function Blog() {
     <ThemeProvider theme={defaultTheme}>
       <CssBaseline />
       <Container maxWidth="lg">
-        <Header title="Blog" sections={sections} />
+        <Header title="Blog" />
         <main>
           <MainFeaturedPost post={mainFeaturedPost} />
           <Grid container spacing={4}>

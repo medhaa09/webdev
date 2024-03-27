@@ -1,7 +1,7 @@
 package models
 
 type RecentActions struct {
-	Time     int       `json:"timeSeconds"`
+	Time     int64     `json:"timeSeconds"`
 	Blog     BlogEntry `json:"blogEntry"`
 	Comments Comment   `json:"comment"`
 }
@@ -33,5 +33,6 @@ type User struct {
 type GroupedComments struct {
 	BlogID    int      `json:"id"`
 	BlogTitle string   `json:"title"`
+	Handle    string   `json:"authorHandle"`
 	Comments  []string `json:"comment"`
 }

@@ -4,6 +4,8 @@ import (
 	"codeforces/models"
 	"context"
 	"fmt"
+	"log"
+
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -57,6 +59,27 @@ func (m *MongoStore) StoreUserData(user models.User) error {
 	}
 	fmt.Println("Insertion of user data successful")
 	return nil
+}
+
+func (m *MongoStore) GetMaxTimeStamp() (int64, error) {
+	matchStage := bson.D{{"$match", bson.D{{"time", bson.D{{"$exists", true}}}}}}
+	groupStage := bson.D{{"$group", bson.D{{"_id", nil}, {"maxTime", bson.D{{"$max", "$time"}}}}}}
+
+	showInfoCursor, err := m.Collection1.Aggregate(context.TODO(), mongo.Pipeline{matchStage, groupStage})
+	if err != nil {
+		log.Fatal(err)
+	}
+	var results []bson.M
+	if err = showInfoCursor.All(context.TODO(), &results); err != nil {
+		log.Fatal(err)
+	}
+
+	if len(results) == 0 {
+		return 0, fmt.Errorf("no documents found")
+	}
+	maxTime := results[0]["maxTime"].(int64)
+	fmt.Println(maxTime)
+	return maxTime, nil
 }
 
 // Fetch all unique blog IDs from the data
